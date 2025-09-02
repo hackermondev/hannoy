@@ -4,7 +4,7 @@ use std::path::PathBuf;
 use heed::types::{DecodeIgnore, Unit};
 use heed::{PutFlags, RoTxn, RwTxn};
 use rand::{Rng, SeedableRng};
-use roaring::RoaringBitmap;
+use roaring::RoaringTreemap;
 use steppe::NoProgress;
 use tracing::{debug, info};
 
@@ -221,7 +221,7 @@ impl<D: Distance> Writer<D> {
             .prefix_iter_mut(wtxn, &Prefix::all(self.index))?
             .remap_key_type::<KeyCodec>();
 
-        let mut new_items = RoaringBitmap::new();
+        let mut new_items = RoaringTreemap::new();
         while let Some(result) = iter.next() {
             match result {
                 Ok((
@@ -489,14 +489,14 @@ impl<D: Distance> Writer<D> {
         &self,
         wtxn: &mut RwTxn,
         options: &BuildOption<P>,
-    ) -> Result<RoaringBitmap, Error>
+    ) -> Result<RoaringTreemap, Error>
     where
         P: steppe::Progress,
     {
         debug!("reset and retrieve the updated items...");
         options.progress.update(HannoyBuild::RetrieveTheUpdatedItems);
 
-        let mut updated_items = RoaringBitmap::new();
+        let mut updated_items = RoaringTreemap::new();
         let mut updated_iter = self
             .database
             .remap_types::<PrefixCodec, DecodeIgnore>()
@@ -520,14 +520,14 @@ impl<D: Distance> Writer<D> {
     }
 
     // Fetches the item's ids, not the links.
-    fn item_indices<P>(&self, wtxn: &mut RwTxn, options: &BuildOption<P>) -> Result<RoaringBitmap>
+    fn item_indices<P>(&self, wtxn: &mut RwTxn, options: &BuildOption<P>) -> Result<RoaringTreemap>
     where
         P: steppe::Progress,
     {
         debug!("started retrieving all the items ids...");
         options.progress.update(HannoyBuild::RetrievingTheItemsIds);
 
-        let mut indices = RoaringBitmap::new();
+        let mut indices = RoaringTreemap::new();
         for (index, result) in self
             .database
             .remap_types::<PrefixCodec, DecodeIgnore>()
@@ -548,7 +548,7 @@ impl<D: Distance> Writer<D> {
 
     // Iterates over links in lmdb and deletes those in `to_delete`. There can be several links
     // with the same NodeId.item, each differing by their layer
-    fn delete_links_from_db(&self, to_delete: RoaringBitmap, wtxn: &mut RwTxn) -> Result<()> {
+    fn delete_links_from_db(&self, to_delete: RoaringTreemap, wtxn: &mut RwTxn) -> Result<()> {
         let mut cursor = self
             .database
             .remap_key_type::<PrefixCodec>()

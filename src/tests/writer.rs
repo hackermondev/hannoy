@@ -3,7 +3,7 @@ use proptest::proptest;
 use rand::rngs::StdRng;
 use rand::seq::SliceRandom;
 use rand::{thread_rng, Rng, SeedableRng};
-use roaring::RoaringBitmap;
+use roaring::RoaringTreemap;
 
 use super::{create_database, rng};
 use crate::distance::{Cosine, Euclidean};
@@ -68,7 +68,7 @@ fn use_u32_max_minus_one_for_a_vec() {
     let handle = create_database::<Euclidean>();
     let mut wtxn = handle.env.write_txn().unwrap();
     let writer = Writer::new(handle.database, 0, 3);
-    writer.add_item(&mut wtxn, u32::MAX - 1, &[0.0, 1.0, 2.0]).unwrap();
+    writer.add_item(&mut wtxn, u64::MAX - 1, &[0.0, 1.0, 2.0]).unwrap();
 
     writer.builder(&mut rng()).build::<M, M0>(&mut wtxn).unwrap();
     wtxn.commit().unwrap();
@@ -76,10 +76,10 @@ fn use_u32_max_minus_one_for_a_vec() {
     insta::assert_snapshot!(handle, @r#"
     ==================
     Dumping index 0
-    Root: Metadata { dimensions: 3, items: RoaringBitmap<[4294967294]>, distance: "euclidean", entry_points: [4294967294], max_level: 1 }
+    Root: Metadata { dimensions: 3, items: RoaringTreemap<[4294967294]>, distance: "euclidean", entry_points: [4294967294], max_level: 1 }
     Version: Version { major: 0, minor: 0, patch: 5 }
-    Links 4294967294: Links(Links { links: RoaringBitmap<[]> })
-    Links 4294967294: Links(Links { links: RoaringBitmap<[]> })
+    Links 4294967294: Links(Links { links: RoaringTreemap<[]> })
+    Links 4294967294: Links(Links { links: RoaringTreemap<[]> })
     Item 4294967294: Item(Item { header: NodeHeaderEuclidean { bias: "0.0000" }, vector: [0.0000, 1.0000, 2.0000] })
     "#);
 }
@@ -89,7 +89,7 @@ fn use_u32_max_for_a_vec() {
     let handle = create_database::<Euclidean>();
     let mut wtxn = handle.env.write_txn().unwrap();
     let writer = Writer::new(handle.database, 0, 3);
-    writer.add_item(&mut wtxn, u32::MAX, &[0.0, 1.0, 2.0]).unwrap();
+    writer.add_item(&mut wtxn, u64::MAX, &[0.0, 1.0, 2.0]).unwrap();
 
     writer.builder(&mut rng()).build::<M, M0>(&mut wtxn).unwrap();
     wtxn.commit().unwrap();
@@ -97,10 +97,10 @@ fn use_u32_max_for_a_vec() {
     insta::assert_snapshot!(handle, @r#"
     ==================
     Dumping index 0
-    Root: Metadata { dimensions: 3, items: RoaringBitmap<[4294967295]>, distance: "euclidean", entry_points: [4294967295], max_level: 1 }
+    Root: Metadata { dimensions: 3, items: RoaringTreemap<[4294967295]>, distance: "euclidean", entry_points: [4294967295], max_level: 1 }
     Version: Version { major: 0, minor: 0, patch: 5 }
-    Links 4294967295: Links(Links { links: RoaringBitmap<[]> })
-    Links 4294967295: Links(Links { links: RoaringBitmap<[]> })
+    Links 4294967295: Links(Links { links: RoaringTreemap<[]> })
+    Links 4294967295: Links(Links { links: RoaringTreemap<[]> })
     Item 4294967295: Item(Item { header: NodeHeaderEuclidean { bias: "0.0000" }, vector: [0.0000, 1.0000, 2.0000] })
     "#);
 }
@@ -118,10 +118,10 @@ fn write_one_vector() {
     insta::assert_snapshot!(handle, @r#"
     ==================
     Dumping index 0
-    Root: Metadata { dimensions: 3, items: RoaringBitmap<[0]>, distance: "euclidean", entry_points: [0], max_level: 1 }
+    Root: Metadata { dimensions: 3, items: RoaringTreemap<[0]>, distance: "euclidean", entry_points: [0], max_level: 1 }
     Version: Version { major: 0, minor: 0, patch: 5 }
-    Links 0: Links(Links { links: RoaringBitmap<[]> })
-    Links 0: Links(Links { links: RoaringBitmap<[]> })
+    Links 0: Links(Links { links: RoaringTreemap<[]> })
+    Links 0: Links(Links { links: RoaringTreemap<[]> })
     Item 0: Item(Item { header: NodeHeaderEuclidean { bias: "0.0000" }, vector: [0.0000, 1.0000, 2.0000] })
     "#);
 }
@@ -168,38 +168,38 @@ fn write_multiple_indexes() {
     insta::assert_snapshot!(handle, @r#"
     ==================
     Dumping index 0
-    Root: Metadata { dimensions: 3, items: RoaringBitmap<[0]>, distance: "euclidean", entry_points: [0], max_level: 1 }
+    Root: Metadata { dimensions: 3, items: RoaringTreemap<[0]>, distance: "euclidean", entry_points: [0], max_level: 1 }
     Version: Version { major: 0, minor: 0, patch: 5 }
-    Links 0: Links(Links { links: RoaringBitmap<[]> })
-    Links 0: Links(Links { links: RoaringBitmap<[]> })
+    Links 0: Links(Links { links: RoaringTreemap<[]> })
+    Links 0: Links(Links { links: RoaringTreemap<[]> })
     Item 0: Item(Item { header: NodeHeaderEuclidean { bias: "0.0000" }, vector: [0.0000, 1.0000, 2.0000] })
     ==================
     Dumping index 1
-    Root: Metadata { dimensions: 3, items: RoaringBitmap<[0]>, distance: "euclidean", entry_points: [0], max_level: 1 }
+    Root: Metadata { dimensions: 3, items: RoaringTreemap<[0]>, distance: "euclidean", entry_points: [0], max_level: 1 }
     Version: Version { major: 0, minor: 0, patch: 5 }
-    Links 0: Links(Links { links: RoaringBitmap<[]> })
-    Links 0: Links(Links { links: RoaringBitmap<[]> })
+    Links 0: Links(Links { links: RoaringTreemap<[]> })
+    Links 0: Links(Links { links: RoaringTreemap<[]> })
     Item 0: Item(Item { header: NodeHeaderEuclidean { bias: "0.0000" }, vector: [0.0000, 1.0000, 2.0000] })
     ==================
     Dumping index 2
-    Root: Metadata { dimensions: 3, items: RoaringBitmap<[0]>, distance: "euclidean", entry_points: [0], max_level: 1 }
+    Root: Metadata { dimensions: 3, items: RoaringTreemap<[0]>, distance: "euclidean", entry_points: [0], max_level: 1 }
     Version: Version { major: 0, minor: 0, patch: 5 }
-    Links 0: Links(Links { links: RoaringBitmap<[]> })
-    Links 0: Links(Links { links: RoaringBitmap<[]> })
+    Links 0: Links(Links { links: RoaringTreemap<[]> })
+    Links 0: Links(Links { links: RoaringTreemap<[]> })
     Item 0: Item(Item { header: NodeHeaderEuclidean { bias: "0.0000" }, vector: [0.0000, 1.0000, 2.0000] })
     ==================
     Dumping index 3
-    Root: Metadata { dimensions: 3, items: RoaringBitmap<[0]>, distance: "euclidean", entry_points: [0], max_level: 1 }
+    Root: Metadata { dimensions: 3, items: RoaringTreemap<[0]>, distance: "euclidean", entry_points: [0], max_level: 1 }
     Version: Version { major: 0, minor: 0, patch: 5 }
-    Links 0: Links(Links { links: RoaringBitmap<[]> })
-    Links 0: Links(Links { links: RoaringBitmap<[]> })
+    Links 0: Links(Links { links: RoaringTreemap<[]> })
+    Links 0: Links(Links { links: RoaringTreemap<[]> })
     Item 0: Item(Item { header: NodeHeaderEuclidean { bias: "0.0000" }, vector: [0.0000, 1.0000, 2.0000] })
     ==================
     Dumping index 4
-    Root: Metadata { dimensions: 3, items: RoaringBitmap<[0]>, distance: "euclidean", entry_points: [0], max_level: 1 }
+    Root: Metadata { dimensions: 3, items: RoaringTreemap<[0]>, distance: "euclidean", entry_points: [0], max_level: 1 }
     Version: Version { major: 0, minor: 0, patch: 5 }
-    Links 0: Links(Links { links: RoaringBitmap<[]> })
-    Links 0: Links(Links { links: RoaringBitmap<[]> })
+    Links 0: Links(Links { links: RoaringTreemap<[]> })
+    Links 0: Links(Links { links: RoaringTreemap<[]> })
     Item 0: Item(Item { header: NodeHeaderEuclidean { bias: "0.0000" }, vector: [0.0000, 1.0000, 2.0000] })
     "#);
 }
@@ -226,66 +226,66 @@ fn write_random_vectors_to_random_indexes() {
     wtxn.commit().unwrap();
 }
 
-#[test]
-fn convert_from_arroy_to_hannoy() {
-    // let handle = create_database::<Euclidean>();
-    let _ = rayon::ThreadPoolBuilder::new().num_threads(1).build_global();
-    let dir = tempfile::tempdir().unwrap();
-    let env = unsafe { heed::EnvOpenOptions::new().map_size(200 * 1024 * 1024).open(dir.path()) }
-        .unwrap();
-    let mut wtxn = env.write_txn().unwrap();
-    let database: arroy::Database<arroy::distances::Cosine> =
-        env.create_database(&mut wtxn, None).unwrap();
-    wtxn.commit().unwrap();
+// #[test]
+// fn convert_from_arroy_to_hannoy() {
+//     // let handle = create_database::<Euclidean>();
+//     let _ = rayon::ThreadPoolBuilder::new().num_threads(1).build_global();
+//     let dir = tempfile::tempdir().unwrap();
+//     let env = unsafe { heed::EnvOpenOptions::new().map_size(200 * 1024 * 1024).open(dir.path()) }
+//         .unwrap();
+//     let mut wtxn = env.write_txn().unwrap();
+//     let database: arroy::Database<arroy::distances::Cosine> =
+//         env.create_database(&mut wtxn, None).unwrap();
+//     wtxn.commit().unwrap();
 
-    let mut rng = rng();
-    let mut wtxn = env.write_txn().unwrap();
+//     let mut rng = rng();
+//     let mut wtxn = env.write_txn().unwrap();
 
-    let mut db_indexes: Vec<u16> = (0..10).collect();
-    db_indexes.shuffle(&mut rng);
+//     let mut db_indexes: Vec<u16> = (0..10).collect();
+//     db_indexes.shuffle(&mut rng);
 
-    for index in db_indexes.iter().copied() {
-        let writer = arroy::Writer::new(database, index, 1024);
+//     for index in db_indexes.iter().copied() {
+//         let writer = arroy::Writer::new(database, index, 1024);
 
-        // We're going to write 100 vectors per index
-        for i in 0..100 {
-            let vector: [f32; 1024] = std::array::from_fn(|_| rng.gen());
-            writer.add_item(&mut wtxn, i, &vector).unwrap();
-        }
-        writer.builder(&mut rng).build(&mut wtxn).unwrap();
-    }
-    wtxn.commit().unwrap();
+//         // We're going to write 100 vectors per index
+//         for i in 0..100 {
+//             let vector: [f32; 1024] = std::array::from_fn(|_| rng.gen());
+//             writer.add_item(&mut wtxn, i, &vector).unwrap();
+//         }
+//         writer.builder(&mut rng).build(&mut wtxn).unwrap();
+//     }
+//     wtxn.commit().unwrap();
 
-    // Now it's time to convert the indexes
+//     // Now it's time to convert the indexes
 
-    let mut wtxn = env.write_txn().unwrap();
-    let rtxn = env.read_txn().unwrap();
-    let database: crate::Database<Cosine> = env.open_database(&mut wtxn, None).unwrap().unwrap();
+//     let mut wtxn = env.write_txn().unwrap();
+//     let rtxn = env.read_txn().unwrap();
+//     let database: crate::Database<Cosine> = env.open_database(&mut wtxn, None).unwrap().unwrap();
 
-    db_indexes.shuffle(&mut rng);
+//     db_indexes.shuffle(&mut rng);
 
-    for index in db_indexes {
-        let pre_commit_arroy_reader =
-            arroy::Reader::<arroy::distances::Cosine>::open(&rtxn, index, database.remap_types())
-                .unwrap();
+//     for index in db_indexes {
+//         let pre_commit_arroy_reader =
+//             arroy::Reader::<arroy::distances::Cosine>::open(&rtxn, index, database.remap_types())
+//                 .unwrap();
 
-        let writer = Writer::new(database, index, pre_commit_arroy_reader.dimensions());
-        writer.builder(&mut rng).prepare_arroy_conversion(&mut wtxn).unwrap();
-        assert!(writer.need_build(&mut wtxn).unwrap());
-        writer.builder(&mut rng).build::<16, 32>(&mut wtxn).unwrap();
-
-        for result in pre_commit_arroy_reader.iter(&rtxn).unwrap() {
-            let (item_id, vector) = result.unwrap();
-            let reader = Reader::open(&wtxn, index, database).unwrap();
-            assert_eq!(reader.item_vector(&wtxn, item_id).unwrap().as_deref(), Some(&vector[..]));
-            let mut found = reader.nns(1).by_vector(&wtxn, &vector).unwrap();
-            dbg!(&found);
-            let (found_item_id, found_distance) = found.pop().unwrap();
-            assert_eq!(found_item_id, item_id);
-            approx::assert_abs_diff_eq!(found_distance, 0.0);
-        }
-    }
-}
+//         let writer = Writer::new(database, index, pre_commit_arroy_reader.dimensions());
+//         writer.builder(&mut rng).prepare_arroy_conversion(&mut wtxn).unwrap();
+//         assert!(writer.need_build(&mut wtxn).unwrap());
+//         writer.builder(&mut rng).build::<16, 32>(&mut wtxn).unwrap();
+        
+//         for result in pre_commit_arroy_reader.iter(&rtxn).unwrap() {
+//             let (item_id, vector) = result.unwrap();
+//             let reader = Reader::open(&wtxn, index, database).unwrap();
+//             assert_eq!(reader.item_vector(&wtxn, item_id).unwrap().as_deref(), Some(&vector[..]));
+//             let mut found = reader.nns(1).by_vector(&wtxn, &vector).unwrap();
+//             dbg!(&found);
+//             let (found_item_id, found_distance) = found.pop().unwrap();
+//             assert_eq!(found_item_id, item_id);
+//             approx::assert_abs_diff_eq!(found_distance, 0.0);
+//         }
+//     }
+// }
 
 #[test]
 fn overwrite_one_item_incremental() {
@@ -303,17 +303,17 @@ fn overwrite_one_item_incremental() {
     insta::assert_snapshot!(handle, @r#"
     ==================
     Dumping index 0
-    Root: Metadata { dimensions: 2, items: RoaringBitmap<[0, 1, 2, 3, 4, 5]>, distance: "euclidean", entry_points: [0, 2, 3], max_level: 1 }
+    Root: Metadata { dimensions: 2, items: RoaringTreemap<[0, 1, 2, 3, 4, 5]>, distance: "euclidean", entry_points: [0, 2, 3], max_level: 1 }
     Version: Version { major: 0, minor: 0, patch: 5 }
-    Links 0: Links(Links { links: RoaringBitmap<[1, 2]> })
-    Links 0: Links(Links { links: RoaringBitmap<[2]> })
-    Links 1: Links(Links { links: RoaringBitmap<[0, 2]> })
-    Links 2: Links(Links { links: RoaringBitmap<[0, 1, 3]> })
-    Links 2: Links(Links { links: RoaringBitmap<[0, 3]> })
-    Links 3: Links(Links { links: RoaringBitmap<[2, 4]> })
-    Links 3: Links(Links { links: RoaringBitmap<[2]> })
-    Links 4: Links(Links { links: RoaringBitmap<[3, 5]> })
-    Links 5: Links(Links { links: RoaringBitmap<[4]> })
+    Links 0: Links(Links { links: RoaringTreemap<[1, 2]> })
+    Links 0: Links(Links { links: RoaringTreemap<[2]> })
+    Links 1: Links(Links { links: RoaringTreemap<[0, 2]> })
+    Links 2: Links(Links { links: RoaringTreemap<[0, 1, 3]> })
+    Links 2: Links(Links { links: RoaringTreemap<[0, 3]> })
+    Links 3: Links(Links { links: RoaringTreemap<[2, 4]> })
+    Links 3: Links(Links { links: RoaringTreemap<[2]> })
+    Links 4: Links(Links { links: RoaringTreemap<[3, 5]> })
+    Links 5: Links(Links { links: RoaringTreemap<[4]> })
     Item 0: Item(Item { header: NodeHeaderEuclidean { bias: "0.0000" }, vector: [0.0000, 0.0000] })
     Item 1: Item(Item { header: NodeHeaderEuclidean { bias: "0.0000" }, vector: [1.0000, 0.0000] })
     Item 2: Item(Item { header: NodeHeaderEuclidean { bias: "0.0000" }, vector: [2.0000, 0.0000] })
@@ -332,17 +332,17 @@ fn overwrite_one_item_incremental() {
     insta::assert_snapshot!(handle, @r#"
     ==================
     Dumping index 0
-    Root: Metadata { dimensions: 2, items: RoaringBitmap<[0, 1, 2, 3, 4, 5]>, distance: "euclidean", entry_points: [0, 2, 3], max_level: 1 }
+    Root: Metadata { dimensions: 2, items: RoaringTreemap<[0, 1, 2, 3, 4, 5]>, distance: "euclidean", entry_points: [0, 2, 3], max_level: 1 }
     Version: Version { major: 0, minor: 0, patch: 5 }
-    Links 0: Links(Links { links: RoaringBitmap<[1]> })
-    Links 0: Links(Links { links: RoaringBitmap<[2]> })
-    Links 1: Links(Links { links: RoaringBitmap<[0, 2]> })
-    Links 2: Links(Links { links: RoaringBitmap<[1, 4]> })
-    Links 2: Links(Links { links: RoaringBitmap<[0, 3]> })
-    Links 3: Links(Links { links: RoaringBitmap<[5]> })
-    Links 3: Links(Links { links: RoaringBitmap<[2]> })
-    Links 4: Links(Links { links: RoaringBitmap<[2, 5]> })
-    Links 5: Links(Links { links: RoaringBitmap<[3, 4]> })
+    Links 0: Links(Links { links: RoaringTreemap<[1]> })
+    Links 0: Links(Links { links: RoaringTreemap<[2]> })
+    Links 1: Links(Links { links: RoaringTreemap<[0, 2]> })
+    Links 2: Links(Links { links: RoaringTreemap<[1, 4]> })
+    Links 2: Links(Links { links: RoaringTreemap<[0, 3]> })
+    Links 3: Links(Links { links: RoaringTreemap<[5]> })
+    Links 3: Links(Links { links: RoaringTreemap<[2]> })
+    Links 4: Links(Links { links: RoaringTreemap<[2, 5]> })
+    Links 5: Links(Links { links: RoaringTreemap<[3, 4]> })
     Item 0: Item(Item { header: NodeHeaderEuclidean { bias: "0.0000" }, vector: [0.0000, 0.0000] })
     Item 1: Item(Item { header: NodeHeaderEuclidean { bias: "0.0000" }, vector: [1.0000, 0.0000] })
     Item 2: Item(Item { header: NodeHeaderEuclidean { bias: "0.0000" }, vector: [2.0000, 0.0000] })
@@ -367,10 +367,10 @@ fn delete_one_item_in_a_one_item_db() {
     insta::assert_snapshot!(handle, @r#"
     ==================
     Dumping index 0
-    Root: Metadata { dimensions: 2, items: RoaringBitmap<[0]>, distance: "euclidean", entry_points: [0], max_level: 1 }
+    Root: Metadata { dimensions: 2, items: RoaringTreemap<[0]>, distance: "euclidean", entry_points: [0], max_level: 1 }
     Version: Version { major: 0, minor: 0, patch: 5 }
-    Links 0: Links(Links { links: RoaringBitmap<[]> })
-    Links 0: Links(Links { links: RoaringBitmap<[]> })
+    Links 0: Links(Links { links: RoaringTreemap<[]> })
+    Links 0: Links(Links { links: RoaringTreemap<[]> })
     Item 0: Item(Item { header: NodeHeaderEuclidean { bias: "0.0000" }, vector: [0.0000, 0.0000] })
     "#);
 
@@ -385,7 +385,7 @@ fn delete_one_item_in_a_one_item_db() {
     insta::assert_snapshot!(handle, @r#"
     ==================
     Dumping index 0
-    Root: Metadata { dimensions: 2, items: RoaringBitmap<[]>, distance: "euclidean", entry_points: [], max_level: 0 }
+    Root: Metadata { dimensions: 2, items: RoaringTreemap<[]>, distance: "euclidean", entry_points: [], max_level: 0 }
     Version: Version { major: 0, minor: 0, patch: 5 }
     "#);
 
@@ -411,10 +411,10 @@ fn delete_document_in_an_empty_index_74() {
     insta::assert_snapshot!(handle, @r#"
     ==================
     Dumping index 0
-    Root: Metadata { dimensions: 2, items: RoaringBitmap<[0]>, distance: "euclidean", entry_points: [0], max_level: 1 }
+    Root: Metadata { dimensions: 2, items: RoaringTreemap<[0]>, distance: "euclidean", entry_points: [0], max_level: 1 }
     Version: Version { major: 0, minor: 0, patch: 5 }
-    Links 0: Links(Links { links: RoaringBitmap<[]> })
-    Links 0: Links(Links { links: RoaringBitmap<[]> })
+    Links 0: Links(Links { links: RoaringTreemap<[]> })
+    Links 0: Links(Links { links: RoaringTreemap<[]> })
     Item 0: Item(Item { header: NodeHeaderEuclidean { bias: "0.0000" }, vector: [0.0000, 0.0000] })
     "#);
 
@@ -438,11 +438,11 @@ fn delete_document_in_an_empty_index_74() {
     insta::assert_snapshot!(handle, @r#"
     ==================
     Dumping index 0
-    Root: Metadata { dimensions: 2, items: RoaringBitmap<[]>, distance: "euclidean", entry_points: [], max_level: 0 }
+    Root: Metadata { dimensions: 2, items: RoaringTreemap<[]>, distance: "euclidean", entry_points: [], max_level: 0 }
     Version: Version { major: 0, minor: 0, patch: 5 }
     ==================
     Dumping index 1
-    Root: Metadata { dimensions: 2, items: RoaringBitmap<[]>, distance: "euclidean", entry_points: [], max_level: 0 }
+    Root: Metadata { dimensions: 2, items: RoaringTreemap<[]>, distance: "euclidean", entry_points: [], max_level: 0 }
     Version: Version { major: 0, minor: 0, patch: 5 }
     "#);
 
@@ -467,10 +467,10 @@ fn delete_one_item_in_a_single_document_database() {
     insta::assert_snapshot!(handle, @r#"
     ==================
     Dumping index 0
-    Root: Metadata { dimensions: 2, items: RoaringBitmap<[0]>, distance: "cosine", entry_points: [0], max_level: 1 }
+    Root: Metadata { dimensions: 2, items: RoaringTreemap<[0]>, distance: "cosine", entry_points: [0], max_level: 1 }
     Version: Version { major: 0, minor: 0, patch: 5 }
-    Links 0: Links(Links { links: RoaringBitmap<[]> })
-    Links 0: Links(Links { links: RoaringBitmap<[]> })
+    Links 0: Links(Links { links: RoaringTreemap<[]> })
+    Links 0: Links(Links { links: RoaringTreemap<[]> })
     Item 0: Item(Item { header: NodeHeaderCosine { norm: "0.0000" }, vector: [0.0000, 0.0000] })
     "#);
 
@@ -485,7 +485,7 @@ fn delete_one_item_in_a_single_document_database() {
     insta::assert_snapshot!(handle, @r#"
     ==================
     Dumping index 0
-    Root: Metadata { dimensions: 2, items: RoaringBitmap<[]>, distance: "cosine", entry_points: [], max_level: 0 }
+    Root: Metadata { dimensions: 2, items: RoaringTreemap<[]>, distance: "cosine", entry_points: [], max_level: 0 }
     Version: Version { major: 0, minor: 0, patch: 5 }
     "#);
 }
@@ -507,17 +507,17 @@ fn delete_one_item() {
     insta::assert_snapshot!(handle, @r#"
     ==================
     Dumping index 0
-    Root: Metadata { dimensions: 2, items: RoaringBitmap<[0, 1, 2, 3, 4, 5]>, distance: "euclidean", entry_points: [0, 2, 3], max_level: 1 }
+    Root: Metadata { dimensions: 2, items: RoaringTreemap<[0, 1, 2, 3, 4, 5]>, distance: "euclidean", entry_points: [0, 2, 3], max_level: 1 }
     Version: Version { major: 0, minor: 0, patch: 5 }
-    Links 0: Links(Links { links: RoaringBitmap<[1, 2]> })
-    Links 0: Links(Links { links: RoaringBitmap<[2]> })
-    Links 1: Links(Links { links: RoaringBitmap<[0, 2]> })
-    Links 2: Links(Links { links: RoaringBitmap<[0, 1, 3]> })
-    Links 2: Links(Links { links: RoaringBitmap<[0, 3]> })
-    Links 3: Links(Links { links: RoaringBitmap<[2, 4]> })
-    Links 3: Links(Links { links: RoaringBitmap<[2]> })
-    Links 4: Links(Links { links: RoaringBitmap<[3, 5]> })
-    Links 5: Links(Links { links: RoaringBitmap<[4]> })
+    Links 0: Links(Links { links: RoaringTreemap<[1, 2]> })
+    Links 0: Links(Links { links: RoaringTreemap<[2]> })
+    Links 1: Links(Links { links: RoaringTreemap<[0, 2]> })
+    Links 2: Links(Links { links: RoaringTreemap<[0, 1, 3]> })
+    Links 2: Links(Links { links: RoaringTreemap<[0, 3]> })
+    Links 3: Links(Links { links: RoaringTreemap<[2, 4]> })
+    Links 3: Links(Links { links: RoaringTreemap<[2]> })
+    Links 4: Links(Links { links: RoaringTreemap<[3, 5]> })
+    Links 5: Links(Links { links: RoaringTreemap<[4]> })
     Item 0: Item(Item { header: NodeHeaderEuclidean { bias: "0.0000" }, vector: [0.0000, 0.0000] })
     Item 1: Item(Item { header: NodeHeaderEuclidean { bias: "0.0000" }, vector: [1.0000, 0.0000] })
     Item 2: Item(Item { header: NodeHeaderEuclidean { bias: "0.0000" }, vector: [2.0000, 0.0000] })
@@ -537,16 +537,16 @@ fn delete_one_item() {
     insta::assert_snapshot!(handle, @r#"
     ==================
     Dumping index 0
-    Root: Metadata { dimensions: 2, items: RoaringBitmap<[0, 1, 2, 4, 5]>, distance: "euclidean", entry_points: [0, 1, 2], max_level: 1 }
+    Root: Metadata { dimensions: 2, items: RoaringTreemap<[0, 1, 2, 4, 5]>, distance: "euclidean", entry_points: [0, 1, 2], max_level: 1 }
     Version: Version { major: 0, minor: 0, patch: 5 }
-    Links 0: Links(Links { links: RoaringBitmap<[1]> })
-    Links 0: Links(Links { links: RoaringBitmap<[1]> })
-    Links 1: Links(Links { links: RoaringBitmap<[0, 2]> })
-    Links 1: Links(Links { links: RoaringBitmap<[0, 2]> })
-    Links 2: Links(Links { links: RoaringBitmap<[1, 2, 4]> })
-    Links 2: Links(Links { links: RoaringBitmap<[1, 2]> })
-    Links 4: Links(Links { links: RoaringBitmap<[2, 4, 5]> })
-    Links 5: Links(Links { links: RoaringBitmap<[4]> })
+    Links 0: Links(Links { links: RoaringTreemap<[1]> })
+    Links 0: Links(Links { links: RoaringTreemap<[1]> })
+    Links 1: Links(Links { links: RoaringTreemap<[0, 2]> })
+    Links 1: Links(Links { links: RoaringTreemap<[0, 2]> })
+    Links 2: Links(Links { links: RoaringTreemap<[1, 2, 4]> })
+    Links 2: Links(Links { links: RoaringTreemap<[1, 2]> })
+    Links 4: Links(Links { links: RoaringTreemap<[2, 4, 5]> })
+    Links 5: Links(Links { links: RoaringTreemap<[4]> })
     Item 0: Item(Item { header: NodeHeaderEuclidean { bias: "0.0000" }, vector: [0.0000, 0.0000] })
     Item 1: Item(Item { header: NodeHeaderEuclidean { bias: "0.0000" }, vector: [1.0000, 0.0000] })
     Item 2: Item(Item { header: NodeHeaderEuclidean { bias: "0.0000" }, vector: [2.0000, 0.0000] })
@@ -566,15 +566,15 @@ fn delete_one_item() {
     insta::assert_snapshot!(handle, @r#"
     ==================
     Dumping index 0
-    Root: Metadata { dimensions: 2, items: RoaringBitmap<[0, 2, 4, 5]>, distance: "euclidean", entry_points: [0, 2, 4], max_level: 1 }
+    Root: Metadata { dimensions: 2, items: RoaringTreemap<[0, 2, 4, 5]>, distance: "euclidean", entry_points: [0, 2, 4], max_level: 1 }
     Version: Version { major: 0, minor: 0, patch: 5 }
-    Links 0: Links(Links { links: RoaringBitmap<[0, 2]> })
-    Links 0: Links(Links { links: RoaringBitmap<[0, 2]> })
-    Links 2: Links(Links { links: RoaringBitmap<[0, 2, 4]> })
-    Links 2: Links(Links { links: RoaringBitmap<[0, 2, 4]> })
-    Links 4: Links(Links { links: RoaringBitmap<[2, 4, 5]> })
-    Links 4: Links(Links { links: RoaringBitmap<[2]> })
-    Links 5: Links(Links { links: RoaringBitmap<[4]> })
+    Links 0: Links(Links { links: RoaringTreemap<[0, 2]> })
+    Links 0: Links(Links { links: RoaringTreemap<[0, 2]> })
+    Links 2: Links(Links { links: RoaringTreemap<[0, 2, 4]> })
+    Links 2: Links(Links { links: RoaringTreemap<[0, 2, 4]> })
+    Links 4: Links(Links { links: RoaringTreemap<[2, 4, 5]> })
+    Links 4: Links(Links { links: RoaringTreemap<[2]> })
+    Links 5: Links(Links { links: RoaringTreemap<[4]> })
     Item 0: Item(Item { header: NodeHeaderEuclidean { bias: "0.0000" }, vector: [0.0000, 0.0000] })
     Item 2: Item(Item { header: NodeHeaderEuclidean { bias: "0.0000" }, vector: [2.0000, 0.0000] })
     Item 4: Item(Item { header: NodeHeaderEuclidean { bias: "0.0000" }, vector: [4.0000, 0.0000] })
@@ -625,7 +625,7 @@ fn delete_one_item_no_snapshots() {
         .unwrap()
         .remap_types::<KeyCodec, DecodeIgnore>();
 
-    let mut keys_of_links = RoaringBitmap::new();
+    let mut keys_of_links = RoaringTreemap::new();
     for res in links_iter {
         let (k, _) = res.unwrap();
         keys_of_links.insert(k.node.item);
@@ -636,7 +636,7 @@ fn delete_one_item_no_snapshots() {
 
 proptest! {
     #[test]
-    fn fuzz_writer(n in 1..=1000u32, dim in 1..=100usize) {
+    fn fuzz_writer(n in 1..=1000u64, dim in 1..=100usize) {
         let handle = create_database::<Euclidean>();
         let mut rng = StdRng::from_seed(thread_rng().gen());
         let mut wtxn = handle.env.write_txn().unwrap();

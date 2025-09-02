@@ -6,7 +6,7 @@ use std::ops::Deref;
 use bytemuck::{bytes_of, cast_slice, pod_read_unaligned};
 use byteorder::{ByteOrder, NativeEndian};
 use heed::{BoxedError, BytesDecode, BytesEncode};
-use roaring::RoaringBitmap;
+use roaring::RoaringTreemap;
 
 use crate::distance::Distance;
 use crate::unaligned_vector::UnalignedVector;
@@ -77,11 +77,11 @@ impl<D: Distance> Item<'_, D> {
 
 #[derive(Clone, Debug)]
 pub struct Links<'a> {
-    pub links: Cow<'a, RoaringBitmap>,
+    pub links: Cow<'a, RoaringTreemap>,
 }
 
 impl<'a> Deref for Links<'a> {
-    type Target = Cow<'a, RoaringBitmap>;
+    type Target = Cow<'a, RoaringTreemap>;
     fn deref(&self) -> &Self::Target {
         &self.links
     }
@@ -93,7 +93,7 @@ pub struct ItemIds<'a> {
 }
 
 impl<'a> ItemIds<'a> {
-    pub fn from_slice(slice: &[u32]) -> ItemIds<'_> {
+    pub fn from_slice(slice: &[u64]) -> ItemIds<'_> {
         ItemIds::from_bytes(cast_slice(slice))
     }
 
@@ -110,7 +110,7 @@ impl<'a> ItemIds<'a> {
     }
 
     pub fn iter(&self) -> impl Iterator<Item = ItemId> + 'a {
-        self.bytes.chunks_exact(size_of::<ItemId>()).map(NativeEndian::read_u32)
+        self.bytes.chunks_exact(size_of::<ItemId>()).map(NativeEndian::read_u64)
     }
 }
 
@@ -160,8 +160,8 @@ impl<'a, D: Distance> BytesDecode<'a> for NodeCodec<D> {
                 Ok(Node::Item(Item { header, vector }))
             }
             [LINKS_TAG, bytes @ ..] => {
-                let links: Cow<'_, RoaringBitmap> =
-                    Cow::Owned(RoaringBitmap::deserialize_from(bytes).unwrap());
+                let links: Cow<'_, RoaringTreemap> =
+                    Cow::Owned(RoaringTreemap::deserialize_from(bytes).unwrap());
                 Ok(Node::Links(Links { links }))
             }
 
@@ -192,7 +192,7 @@ mod tests {
     use super::{Item, Links, Node, NodeCodec};
     use crate::{distance::Cosine, internals::UnalignedVector, Distance};
     use heed::{BytesDecode, BytesEncode};
-    use roaring::RoaringBitmap;
+    use roaring::RoaringTreemap;
     use std::borrow::Cow;
 
     #[test]
@@ -241,7 +241,7 @@ mod tests {
 
     #[test]
     fn test_bitmap_codec() {
-        let mut bitmap = RoaringBitmap::new();
+        let mut bitmap = RoaringTreemap::new();
         bitmap.insert(1);
         bitmap.insert(42);
 

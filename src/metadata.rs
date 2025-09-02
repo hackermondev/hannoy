@@ -2,7 +2,7 @@ use std::borrow::Cow;
 use std::ffi::CStr;
 use std::mem::size_of;
 
-use ::roaring::RoaringBitmap;
+use ::roaring::RoaringTreemap;
 use byteorder::{BigEndian, ByteOrder};
 use heed::BoxedError;
 
@@ -11,7 +11,7 @@ use crate::node::ItemIds;
 #[derive(Debug)]
 pub struct Metadata<'a> {
     pub dimensions: u32,
-    pub items: RoaringBitmap,
+    pub items: RoaringTreemap,
     pub distance: &'a str,
     pub entry_points: ItemIds<'a>,
     pub max_level: u8,
@@ -55,7 +55,7 @@ impl<'a> heed::BytesDecode<'a> for MetadataCodec {
         let bytes = &bytes[size_of::<u32>()..];
         let items_size = BigEndian::read_u32(bytes) as usize;
         let bytes = &bytes[size_of::<u32>()..];
-        let items = RoaringBitmap::deserialize_from(&bytes[..items_size])?;
+        let items = RoaringTreemap::deserialize_from(&bytes[..items_size])?;
         let bytes = &bytes[items_size..];
         let entry_points = ItemIds::from_bytes(&bytes[..bytes.len() - 1]);
         let max_level = bytes[bytes.len() - 1];
@@ -74,7 +74,7 @@ mod test {
     fn metadata_codec() {
         let metadata = Metadata {
             dimensions: 12,
-            items: RoaringBitmap::from_sorted_iter(0..100).unwrap(),
+            items: RoaringTreemap::from_sorted_iter(0..100).unwrap(),
             entry_points: ItemIds::from_slice(&[1, 2, 3, 4]),
             max_level: 42,
             distance: "tamo",

@@ -60,15 +60,15 @@ impl NodeId {
         Self { mode: NodeMode::Metadata, item: 1, layer: 0 }
     }
 
-    pub const fn updated(item: u32) -> Self {
+    pub const fn updated(item: u64) -> Self {
         Self { mode: NodeMode::Updated, item, layer: 0 }
     }
 
-    pub const fn links(item: u32, layer: u8) -> Self {
+    pub const fn links(item: u64, layer: u8) -> Self {
         Self { mode: NodeMode::Links, item, layer }
     }
 
-    pub const fn item(item: u32) -> Self {
+    pub const fn item(item: u64) -> Self {
         Self { mode: NodeMode::Item, item, layer: 0 }
     }
 
@@ -102,7 +102,7 @@ impl NodeId {
     pub fn from_bytes(bytes: &[u8]) -> (Self, &[u8]) {
         let mode = NodeMode::try_from(bytes[0]).expect("Could not parse the node mode");
         let layer = bytes[1];
-        let item = BigEndian::read_u32(&bytes[2..]);
+        let item = BigEndian::read_u64(&bytes[2..]);
 
         (Self { mode, item, layer }, &bytes[size_of::<NodeMode>() + size_of::<ItemId>()..])
     }
@@ -128,11 +128,11 @@ mod test {
         assert!(NodeId::updated(1) > NodeId::updated(0));
         assert!(NodeId::updated(0) < NodeId::updated(1));
 
-        assert!(NodeId::links(u32::MAX, 0) < NodeId::item(0));
+        assert!(NodeId::links(u64::MAX, 0) < NodeId::item(0));
 
         assert!(NodeId::metadata() == NodeId::metadata());
-        assert!(NodeId::metadata() < NodeId::links(u32::MIN, 0));
-        assert!(NodeId::metadata() < NodeId::updated(u32::MIN));
-        assert!(NodeId::metadata() < NodeId::item(u32::MIN));
+        assert!(NodeId::metadata() < NodeId::links(u64::MIN, 0));
+        assert!(NodeId::metadata() < NodeId::updated(u64::MIN));
+        assert!(NodeId::metadata() < NodeId::item(u64::MIN));
     }
 }

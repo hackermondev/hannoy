@@ -35,15 +35,15 @@ impl Key {
         Self::new(index, NodeId::version())
     }
 
-    pub const fn updated(index: u16, item: u32) -> Self {
+    pub const fn updated(index: u16, item: u64) -> Self {
         Self::new(index, NodeId::updated(item))
     }
 
-    pub const fn item(index: u16, item: u32) -> Self {
+    pub const fn item(index: u16, item: u64) -> Self {
         Self::new(index, NodeId::item(item))
     }
 
-    pub const fn links(index: u16, item: u32, layer: u8) -> Self {
+    pub const fn links(index: u16, item: u64, layer: u8) -> Self {
         Self::new(index, NodeId::links(item, layer))
     }
 }
@@ -73,7 +73,7 @@ impl heed::BytesDecode<'_> for KeyCodec {
         let bytes = &bytes[size_of::<u16>()..];
         let mode = bytes[0].try_into()?;
         let bytes = &bytes[size_of::<u8>()..];
-        let item = BigEndian::read_u32(bytes);
+        let item = BigEndian::read_u64(bytes);
         let bytes = &bytes[size_of::<u32>()..];
         let layer = bytes[0];
 

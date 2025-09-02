@@ -126,7 +126,7 @@ pub type Result<T, E = Error> = std::result::Result<T, E>;
 pub type Database<D> = heed::Database<internals::KeyCodec, NodeCodec<D>>;
 
 /// An identifier for the items stored in the database.
-pub type ItemId = u32;
+pub type ItemId = u64;
 /// An indentifier for the links of the hnsw. We can guarantee mathematically there will always be
 /// less than 256 layers.
 pub type LayerId = u8;

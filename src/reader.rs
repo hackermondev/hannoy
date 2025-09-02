@@ -8,7 +8,7 @@ use heed::types::{Bytes, DecodeIgnore};
 use heed::RoTxn;
 use madvise::AccessPattern;
 use min_max_heap::MinMaxHeap;
-use roaring::RoaringBitmap;
+use roaring::RoaringTreemap;
 use tracing::warn;
 
 use crate::distance::Distance;
@@ -38,8 +38,8 @@ const LINEAR_SEARCH_THRESHOLD: u64 = 0;
 /// Options used to make a query against an hannoy [`Reader`].
 pub struct QueryBuilder<'a, D: Distance> {
     reader: &'a Reader<'a, D>,
-    candidates: Option<&'a RoaringBitmap>,
-    filter: Option<Box<dyn Fn(u32, f32) -> bool + 'a>>,
+    candidates: Option<&'a RoaringTreemap>,
+    filter: Option<Box<dyn Fn(u64, f32) -> bool + 'a>>,
     count: usize,
     ef: usize,
 }
@@ -94,10 +94,10 @@ impl<'a, D: Distance> QueryBuilder<'a, D> {
     /// ```no_run
     /// # use hannoy::{Reader, distances::Euclidean};
     /// # let (reader, rtxn): (Reader<Euclidean>, heed::RoTxn) = todo!();
-    /// let candidates = roaring::RoaringBitmap::from_iter([1, 3, 4, 5, 6, 7, 8, 9, 15, 16]);
+    /// let candidates = roaring::RoaringTreemap::from_iter([1, 3, 4, 5, 6, 7, 8, 9, 15, 16]);
     /// reader.nns(20).candidates(&candidates).by_item(&rtxn, 6);
     /// ```
-    pub fn candidates(&mut self, candidates: &'a RoaringBitmap) -> &mut Self {
+    pub fn candidates(&mut self, candidates: &'a RoaringTreemap) -> &mut Self {
         self.candidates = Some(candidates);
         self
     }
@@ -113,7 +113,7 @@ impl<'a, D: Distance> QueryBuilder<'a, D> {
     /// # let (reader, rtxn): (Reader<Euclidean>, heed::RoTxn) = todo!();
     /// reader.nns(20).filter(|id, distance| id % 2 == 0).by_item(&rtxn, 6);
     /// ```
-    pub fn filter<F: Fn(u32, f32) -> bool + 'a>(&mut self, filter: F) -> &mut Self {
+    pub fn filter<F: Fn(u64, f32) -> bool + 'a>(&mut self, filter: F) -> &mut Self {
         self.filter = Some(Box::new(filter));
         self
     }
@@ -144,7 +144,7 @@ pub struct Reader<'t, D: Distance> {
     entry_points: ItemIds<'t>,
     max_level: usize,
     dimensions: usize,
-    items: RoaringBitmap,
+    items: RoaringTreemap,
     version: Version,
     _marker: marker::PhantomData<D>,
 }
@@ -233,7 +233,7 @@ impl<'t, D: Distance> Reader<'t, D> {
         };
 
         // Load links and vectors for layers > 0.
-        let mut added = RoaringBitmap::new();
+        let mut added = RoaringTreemap::new();
         for lvl in (1..=metadata.max_level).rev() {
             for result in database.remap_data_type::<Bytes>().iter(rtxn)? {
                 if available_memory < largest_alloc.load(Ordering::Relaxed) {
@@ -300,7 +300,7 @@ impl<'t, D: Distance> Reader<'t, D> {
     }
 
     /// Returns all the item ids contained in this index.
-    pub fn item_ids(&self) -> &RoaringBitmap {
+    pub fn item_ids(&self) -> &RoaringTreemap {
         &self.items
     }
 
@@ -368,7 +368,7 @@ impl<'t, D: Distance> Reader<'t, D> {
     ) -> Result<MinMaxHeap<ScoredLink>> {
         let mut candidates = BinaryHeap::new();
         let mut res = MinMaxHeap::with_capacity(ef);
-        let mut visited = RoaringBitmap::new();
+        let mut visited = RoaringTreemap::new();
 
         // Register all entry points as visited and populate candidates
         for &ep in eps {
@@ -483,7 +483,7 @@ impl<'t, D: Distance> Reader<'t, D> {
     pub fn assert_validity(&self, rtxn: &RoTxn) -> Result<()> {
         // 1. Compare items in db with bitmap from metadata
         use crate::node::NodeCodec;
-        let mut item_ids = RoaringBitmap::new();
+        let mut item_ids = RoaringTreemap::new();
         for result in self
             .database
             .remap_types::<PrefixCodec, DecodeIgnore>()
@@ -496,7 +496,7 @@ impl<'t, D: Distance> Reader<'t, D> {
         assert_eq!(item_ids, self.items);
 
         // 2. Check links are valid
-        let mut link_ids = RoaringBitmap::new();
+        let mut link_ids = RoaringTreemap::new();
         for result in self
             .database
             .remap_types::<PrefixCodec, NodeCodec<D>>()

@@ -14,7 +14,7 @@ use rand::distributions::WeightedIndex;
 use rand::prelude::Distribution;
 use rand::Rng;
 use rayon::iter::{IntoParallelIterator, ParallelIterator};
-use roaring::RoaringBitmap;
+use roaring::RoaringTreemap;
 use tinyvec::{array_vec, ArrayVec};
 use tracing::{debug, error};
 
@@ -124,8 +124,8 @@ impl<'a, D: Distance, const M: usize, const M0: usize> HnswBuilder<'a, D, M, M0>
     #[allow(clippy::too_many_arguments)]
     pub fn build<R, P>(
         &mut self,
-        mut to_insert: RoaringBitmap,
-        to_delete: &RoaringBitmap,
+        mut to_insert: RoaringTreemap,
+        to_delete: &RoaringTreemap,
         database: Database<D>,
         index: u16,
         wtxn: &mut RwTxn,
@@ -204,7 +204,7 @@ impl<'a, D: Distance, const M: usize, const M0: usize> HnswBuilder<'a, D, M, M0>
 
                 let key = Key::links(index, *item_id, lvl as u8);
                 let links = Links {
-                    links: Cow::Owned(RoaringBitmap::from_iter(
+                    links: Cow::Owned(RoaringTreemap::from_iter(
                         node_state.links.iter().map(|(_, i)| *i),
                     )),
                 };
@@ -223,19 +223,19 @@ impl<'a, D: Distance, const M: usize, const M0: usize> HnswBuilder<'a, D, M, M0>
     /// entry points are present on all layers before build
     fn prepare_levels_and_entry_points<P>(
         &mut self,
-        levels: &mut Vec<(u32, usize)>,
+        levels: &mut Vec<(u64, usize)>,
         cur_max_level: usize,
-        to_delete: &RoaringBitmap,
+        to_delete: &RoaringTreemap,
         lmdb: &FrozenReader<D>,
         options: &BuildOption<P>,
-    ) -> Result<RoaringBitmap>
+    ) -> Result<RoaringTreemap>
     where
         P: steppe::Progress,
     {
         debug!("Resolving entry points in (maybe incremental) build");
         options.progress.update(HannoyBuild::ResolveGraphEntryPoints);
 
-        let old_eps = RoaringBitmap::from_iter(self.entry_points.iter());
+        let old_eps = RoaringTreemap::from_iter(self.entry_points.iter());
         let mut ok_eps = &old_eps - to_delete;
 
         // If any old entry points were deleted we need to replace them
@@ -339,7 +339,7 @@ impl<'a, D: Distance, const M: usize, const M0: usize> HnswBuilder<'a, D, M, M0>
     fn maybe_patch_old_links<P>(
         &mut self,
         lmdb: &FrozenReader<D>,
-        to_delete: &RoaringBitmap,
+        to_delete: &RoaringTreemap,
         options: &BuildOption<P>,
     ) -> Result<()>
     where
@@ -391,7 +391,7 @@ impl<'a, D: Distance, const M: usize, const M0: usize> HnswBuilder<'a, D, M, M0>
             }
 
             // Iter through each of the deleted, and explore his neighbours
-            let mut bitmap = RoaringBitmap::new();
+            let mut bitmap = RoaringTreemap::new();
             for item_id in del_subset.iter() {
                 bitmap.extend(lmdb.get_links(item_id, lvl)?.iter());
             }
@@ -466,7 +466,7 @@ impl<'a, D: Distance, const M: usize, const M0: usize> HnswBuilder<'a, D, M, M0>
     ) -> Result<MinMaxHeap<ScoredLink>> {
         let mut candidates = BinaryHeap::new();
         let mut res = MinMaxHeap::with_capacity(ef);
-        let mut visited = RoaringBitmap::new();
+        let mut visited = RoaringTreemap::new();
 
         // Register all entry points as visited and populate candidates
         for &ep in eps {

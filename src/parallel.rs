@@ -5,7 +5,7 @@ use std::marker;
 use hashbrown::HashMap;
 use heed::types::Bytes;
 use heed::{BytesDecode, RoTxn};
-use roaring::RoaringBitmap;
+use roaring::RoaringTreemap;
 use rustc_hash::FxBuildHasher;
 use tracing::debug;
 
@@ -27,7 +27,7 @@ pub struct ImmutableItems<'t, D> {
     _marker: marker::PhantomData<(&'t (), D)>,
 }
 
-// NOTE: this previously took an arg `items: &RoaringBitmap` which corresponded to the `to_insert`.
+// NOTE: this previously took an arg `items: &RoaringTreemap` which corresponded to the `to_insert`.
 // When building the hnsw in multiple dumps we need vecs from previous dumps in order to "glue"
 // things together.
 // To accomodate this we use a cursor over ALL Key::items in the db.
@@ -93,7 +93,7 @@ unsafe impl<D> Sync for ImmutableItems<'_, D> {}
 /// in the mmapped file and the transaction is kept here and therefore
 /// no longer touches the database.
 pub struct ImmutableLinks<'t, D> {
-    links: HashMap<(u32, u8), (usize, *const u8), FxBuildHasher>,
+    links: HashMap<(u64, u8), (usize, *const u8), FxBuildHasher>,
     _marker: marker::PhantomData<(&'t (), D)>,
 }
 
@@ -148,7 +148,7 @@ impl<'t, D: Distance> ImmutableLinks<'t, D> {
 
     pub fn iter(
         &self,
-    ) -> impl Iterator<Item = heed::Result<((ItemId, u8), Cow<'_, RoaringBitmap>)>> {
+    ) -> impl Iterator<Item = heed::Result<((ItemId, u8), Cow<'_, RoaringTreemap>)>> {
         self.links.keys().map(|&k| {
             let (item_id, level) = k;
             match self.get(item_id, level) {
@@ -165,7 +165,7 @@ impl<'t, D: Distance> ImmutableLinks<'t, D> {
     pub fn iter_layer(
         &self,
         layer: u8,
-    ) -> impl Iterator<Item = heed::Result<((ItemId, u8), Cow<'_, RoaringBitmap>)>> {
+    ) -> impl Iterator<Item = heed::Result<((ItemId, u8), Cow<'_, RoaringTreemap>)>> {
         self.links.keys().filter_map(move |&k| {
             let (item_id, level) = k;
             if level != layer {

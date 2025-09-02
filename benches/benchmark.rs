@@ -42,7 +42,7 @@ mod hnsw {
         for vec_id in 0..size {
             let mut vec = [0.0; DIM];
             rng.fill(&mut vec);
-            writer.add_item(&mut wtxn, vec_id as u32, &vec)?;
+            writer.add_item(&mut wtxn, vec_id as u64, &vec)?;
         }
 
         Ok((writer, wtxn, db))
